@@ -17,7 +17,8 @@
         },
         "sintel.primitives.timeseries_preprocessing.rolling_window_sequences_labels#1": {
             "target_column": 1,
-            "window_size": 250
+            "window_size": 250,
+            "min_percent": 0
         },
         "keras.Sequential.LSTMTimeSeriesClassifier#1": {
             "epochs": 5,
