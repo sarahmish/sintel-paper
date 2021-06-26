@@ -30,16 +30,32 @@ def event_to_remove(pred, true, k):
     return sample(incorrect, k)
 
 def annotator(pred, true, k):
+    if not isinstance(pred, list):
+        pred = list(pred[['start', 'end']].itertuples(index=False))
+    if not isinstance(true, list):
+        true = list(true[['start', 'end']].itertuples(index=False))
+    
     to_add = event_to_add(pred, true, k)
     to_remove = event_to_remove(pred, true, k)
 
-    return sample(to_add + to_remove, k)
+    annot = sample(to_add + to_remove, k)
+    keep = [x for x in pred if _any_overlap(x, true)]
+    
+    for (action, event) in annot:
+        if action == 'a':
+            keep.append(event)
+            
+    return keep
 
 def add_label(df, events):
+    df_ = df.copy()
+    
     for (action, event) in events:
         if action == 'r':
             label = 0
         elif action == 'a':
             label = 1
 
-        df.at[event[0]: event[1], 'label'] = label
+        df_.at[event[0]: event[1], 'label'] = label
+        
+    return df_
