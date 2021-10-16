@@ -37,15 +37,15 @@ BENCHMARK_PATH = os.path.join(os.path.join(
     'benchmark'
 )
 
-BENCHMARK_DATA = pd.read_csv(S3_URL.format(
-    BUCKET, 'datasets.csv'), index_col=0, header=None).applymap(ast.literal_eval).to_dict()[1]
-BENCHMARK_PARAMS = pd.read_csv(S3_URL.format(
-    BUCKET, 'parameters.csv'), index_col=0, header=None).applymap(ast.literal_eval).to_dict()[1]
+BENCHMARK_DATA = pd.read_csv(os.path.join(DATA_PATH,
+    'datasets.csv'), index_col=0, header=None).applymap(ast.literal_eval).to_dict()[1]
+BENCHMARK_PARAMS = pd.read_csv(os.path.join(DATA_PATH,
+    'parameters.csv'), index_col=0, header=None).applymap(ast.literal_eval).to_dict()[1]
 
 PIPELINE_DIR = os.path.join(os.path.dirname(__file__), 'pipelines', 'verified')
 
 VERIFIED_PIPELINES = [
-    'arima', 'lstm_dynamic_threshold', 'azure', 'tadgan'
+    'arima', 'lstm_dynamic_threshold', 'azure', 'tadgan', 'lstm_autoencoder', 'dense_autoencoder'
 ]
 
 VERIFIED_PIPELINES_GPU = {
@@ -59,13 +59,15 @@ VERIFIED_PIPELINES_GPU = {
 def _load_signal(signal, test_split):
     if isinstance(test_split, float):
         train, test = load_signal(signal, test_size=test_split)
+        data = None
     elif test_split:
         train = load_signal(signal + '-train')
-        test = load_signal(signal)
+        test = load_signal(signal + '-test')
+        data = load_signal(signal)
     else:
-        train = test = load_signal(signal)
+        train = test = data = load_signal(signal)
 
-    return train, test
+    return train, test, data
 
 
 def _detrend_signal(df, value_column):
@@ -128,12 +130,13 @@ def _sort_leaderboard(df, rank, metrics):
 def _evaluate_signal(pipeline, signal, hyperparameter, metrics,
                      test_split=False, detrend=False, pipeline_path=None):
 
-    train, test = _load_signal(signal, test_split)
+    train, test, data = _load_signal(signal, test_split)
     truth = load_anomalies(signal)
 
     if detrend:
         train = _detrend_signal(train, 'value')
         test = _detrend_signal(test, 'value')
+        data = _detrend_signal(data, 'value')
 
     try:
         LOGGER.info("Scoring pipeline %s on signal %s (test split: %s)",
@@ -141,7 +144,7 @@ def _evaluate_signal(pipeline, signal, hyperparameter, metrics,
 
         start = datetime.utcnow()
         ort = OrionTuner(pipeline, hyperparameter)
-        ort.tune(data=test, anomalies=truth, train=train, scorer='f1', post=True)
+        ort.tune(data=data, anomalies=truth, train=train, scorer='f1', post=True)
         anomalies = ort.detect(test)
         elapsed = datetime.utcnow() - start
 
@@ -378,7 +381,7 @@ def benchmark(pipelines=None, datasets=None, hyperparameters=None, metrics=METRI
     return _sort_leaderboard(scores, rank, metrics)
 
 
-def main(workers=1):
+def main(workers='dask'):
     pipeline_dir = 'save_pipelines'
     cache_dir = 'cache'
 
@@ -392,9 +395,15 @@ def main(workers=1):
     metrics = {k: partial(fun, weighted=False) for k, fun in METRICS.items()}
 
     # pipelines
-    pipelines = VERIFIED_PIPELINES
+    pipelines = ['lstm_dynamic_threshold']
 
-    results = benchmark(
+    # datasets
+    datasets = {
+        'MSL': BENCHMARK_DATA['MSL'],
+        'SMAP': BENCHMARK_DATA['SMAP']
+    }
+
+    results = benchmark(datasets=datasets,
         pipelines=pipelines, metrics=metrics, output_path=output_path, workers=workers,
         show_progress=False, pipeline_dir=pipeline_dir, cache_dir=cache_dir)
 
@@ -402,4 +411,8 @@ def main(workers=1):
 
 
 if __name__ == "__main__":
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    logging.debug("test")
+
     results = main()
