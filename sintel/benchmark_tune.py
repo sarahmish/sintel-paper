@@ -19,7 +19,7 @@ import tqdm
 from scipy import signal as scipy_signal
 
 from orion.analysis import _load_pipeline, analyze
-from orion.data import load_anomalies, load_signal
+from orion.data import load_anomalies, load_signal, DATA_PATH
 from orion.evaluation import CONTEXTUAL_METRICS as METRICS
 from orion.evaluation import contextual_confusion_matrix
 from orion.tune import OrionTuner
