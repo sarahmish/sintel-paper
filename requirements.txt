@@ -1,4 +1,4 @@
-orion-ml==0.1.8
+orion-ml==0.1.7
 matplotlib
 seaborn 
 notebook
