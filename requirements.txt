@@ -16,10 +16,10 @@ chardet==4.0.0
 click==8.0.1
 cloudpickle==1.6.0
 cycler==0.10.0
-dask==2021.6.2
+dask==2021.3.0
 decorator==4.4.2
 defusedxml==0.7.1
-distributed==2021.6.2
+distributed==2021.3.0
 docutils==0.15.2
 entrypoints==0.3
 featuretools==0.11.0
@@ -137,6 +137,3 @@ xgboost==0.90
 XlsxWriter==1.4.3
 zict==2.0.0
 zipp==3.4.1
-matplotlib
-seaborn 
-notebook
