@@ -2,7 +2,7 @@
 
 """
 Generate the figures and results for the paper: "Sintel: A Machine 
-Learning Framework for Extracting Insights from Signals."
+Learning Framework to Extract Insights from Signals."
 """
 
 import os
