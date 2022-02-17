@@ -137,3 +137,6 @@ xgboost==0.90
 XlsxWriter==1.4.3
 zict==2.0.0
 zipp==3.4.1
+matplotlib
+seaborn 
+notebook
