@@ -10,8 +10,8 @@ Experiments were made in **python 3.7**.
 To reproduce the analysis made, create a virtual environment and install required packages, then run the script directly. All results will be saved to `./output` directory.
 
 ```bash
-python -m venv sintel-env
-source sintel-env/bin/activate
+conda create --name sintel-env python=3.7
+conda activate sintel-env
 pip install -r requirements.txt
 python analysis.py
 ```

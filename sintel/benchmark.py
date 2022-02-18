@@ -36,10 +36,10 @@ BENCHMARK_PATH = os.path.join(os.path.join(
     'benchmark'
 )
 
-BENCHMARK_DATA = pd.read_csv(os.path.join(DATA_PATH,
-    'datasets.csv'), index_col=0, header=None).applymap(ast.literal_eval).to_dict()[1]
-BENCHMARK_PARAMS = pd.read_csv(os.path.join(DATA_PATH,
-    'parameters.csv'), index_col=0, header=None).applymap(ast.literal_eval).to_dict()[1]
+BENCHMARK_DATA = pd.read_csv(S3_URL.format(
+    BUCKET, 'datasets.csv'), index_col=0, header=None).applymap(ast.literal_eval).to_dict()[1]
+BENCHMARK_PARAMS = pd.read_csv(S3_URL.format(
+    BUCKET, 'parameters.csv'), index_col=0, header=None).applymap(ast.literal_eval).to_dict()[1]
 
 OUTPUT_PATH = Path('output')
 
@@ -328,7 +328,6 @@ def tune_benchmark(pipelines=None, datasets=None, hyperparameters=None, metrics=
     for dataset, signals in datasets.items():
         for pipeline_name, pipeline in pipelines.items():
             hyperparameter = _get_pipeline_hyperparameter(hyperparameters, dataset, pipeline_name)
-            print(dataset, pipeline_name, hyperparameter)
             parameters = BENCHMARK_PARAMS.get(dataset)
             if parameters is not None:
                 detrend, test_split = parameters.values()

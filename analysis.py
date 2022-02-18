@@ -23,7 +23,7 @@ from orion.benchmark import benchmark
 from orion.evaluation import CONTEXTUAL_METRICS as METRICS
 from orion.evaluation import contextual_confusion_matrix
 
-from sintel.benchmark import tune_benchmark
+from sintel.benchmark import tune_benchmark, BENCHMARK_DATA
 
 warnings.simplefilter('ignore')
 
@@ -339,7 +339,7 @@ def run_tune_benchmark():
     return results
 
 if __name__ == '__main__':
-    # print("Running benchmark.. ")
-    # run_benchmark()
+    print("Running benchmark.. ")
+    run_benchmark()
     print("Running tuning benchmark.. ")
     run_tune_benchmark()
