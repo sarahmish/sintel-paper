@@ -17,13 +17,12 @@ import numpy as np
 import pandas as pd
 import tqdm
 from scipy import signal as scipy_signal
-
-from orion.analysis import _load_pipeline, analyze
-from orion.data import load_anomalies, load_signal, DATA_PATH
+from orion.data import load_anomalies, load_signal
 from orion.evaluation import CONTEXTUAL_METRICS as METRICS
 from orion.evaluation import contextual_confusion_matrix
-from orion.tune import OrionTuner
 from orion.progress import TqdmLogger, progress
+
+from sintel.tune import OrionTuner
 
 warnings.simplefilter('ignore')
 
@@ -42,19 +41,7 @@ BENCHMARK_DATA = pd.read_csv(os.path.join(DATA_PATH,
 BENCHMARK_PARAMS = pd.read_csv(os.path.join(DATA_PATH,
     'parameters.csv'), index_col=0, header=None).applymap(ast.literal_eval).to_dict()[1]
 
-PIPELINE_DIR = os.path.join(os.path.dirname(__file__), 'pipelines', 'verified')
-
-VERIFIED_PIPELINES = [
-    'arima', 'lstm_dynamic_threshold', 'azure', 'tadgan', 'lstm_autoencoder', 'dense_autoencoder'
-]
-
-VERIFIED_PIPELINES_GPU = {
-    'arima': 'arima',
-    'lstm_dynamic_threshold': 'lstm_dynamic_threshold_gpu',
-    'azure': 'azure',
-    'tadgan': 'tadgan_gpu'
-}
-
+OUTPUT_PATH = Path('output')
 
 def _load_signal(signal, test_split):
     if isinstance(test_split, float):
@@ -83,8 +70,7 @@ def _get_pipeline_hyperparameter(hyperparameters, dataset_name, pipeline_name):
         hyperparameters_ = hyperparameters_.get(pipeline_name) or hyperparameters_
 
     if hyperparameters_ is None and dataset_name and pipeline_name:
-        file_path = os.path.join(
-            PIPELINE_DIR, pipeline_name, pipeline_name + '_' + dataset_name.lower() + '.json')
+        file_path = os.path.join('..', 'Orion', 'orion', 'pipelines', 'verified', pipeline_name, pipeline_name + '_' + dataset_name.lower() + '.json')
         if os.path.exists(file_path):
             hyperparameters_ = file_path
 
@@ -143,8 +129,11 @@ def _evaluate_signal(pipeline, signal, hyperparameter, metrics,
                     pipeline, signal, test_split)
 
         start = datetime.utcnow()
-        ort = OrionTuner(pipeline, hyperparameter)
-        ort.tune(data=data, anomalies=truth, train=train, scorer='f1', post=True)
+        ort = OrionTuner(pipeline=pipeline, hyperparameters=hyperparameter)
+        ort.tune(data=data, anomalies=truth, train=train, scorer='f1', max_evals=15, post=True)
+        ort._mlpipeline.set_hyperparameters(ort.tuned)
+        LOGGER.debug('Tuned pipeline hyperparameters: %s', ort._mlpipeline.get_hyperparameters())
+        ort.fit(train)
         anomalies = ort.detect(test)
         elapsed = datetime.utcnow() - start
 
@@ -152,6 +141,10 @@ def _evaluate_signal(pipeline, signal, hyperparameter, metrics,
             name: scorer(truth, anomalies, test)
             for name, scorer in metrics.items()
         }
+
+        if pipeline_path:
+            with open(pipeline_path, 'wb') as f:
+                pickle.dump(ort._mlpipeline, f)
 
         status = 'OK'
 
@@ -172,10 +165,6 @@ def _evaluate_signal(pipeline, signal, hyperparameter, metrics,
     scores['status'] = status
     scores['elapsed'] = elapsed.total_seconds()
     scores['split'] = test_split
-
-    if pipeline_path:
-        with open(pipeline_path, 'wb') as f:
-            pickle.dump(pipeline, f)
 
     return scores
 
@@ -242,9 +231,9 @@ def _run_on_dask(jobs, verbose):
     return dask.compute(*persisted)
 
 
-def benchmark(pipelines=None, datasets=None, hyperparameters=None, metrics=METRICS, rank='f1',
-              test_split=False, detrend=False, iterations=1, workers=1, show_progress=False,
-              cache_dir=None, output_path=None, pipeline_dir=None):
+def tune_benchmark(pipelines=None, datasets=None, hyperparameters=None, metrics=METRICS, rank='f1',
+                   test_split=False, detrend=False, iterations=1, workers=1, show_progress=False,
+                   cache_dir=None, output_path=None, pipeline_dir=None):
     """Run pipelines on the given datasets and evaluate the performance.
 
     The pipelines are used to analyze the given signals and later on the
@@ -339,6 +328,7 @@ def benchmark(pipelines=None, datasets=None, hyperparameters=None, metrics=METRI
     for dataset, signals in datasets.items():
         for pipeline_name, pipeline in pipelines.items():
             hyperparameter = _get_pipeline_hyperparameter(hyperparameters, dataset, pipeline_name)
+            print(dataset, pipeline_name, hyperparameter)
             parameters = BENCHMARK_PARAMS.get(dataset)
             if parameters is not None:
                 detrend, test_split = parameters.values()
@@ -380,39 +370,3 @@ def benchmark(pipelines=None, datasets=None, hyperparameters=None, metrics=METRI
 
     return _sort_leaderboard(scores, rank, metrics)
 
-
-def main(workers='dask'):
-    pipeline_dir = 'save_pipelines'
-    cache_dir = 'cache'
-
-    # output path
-    version = "results.csv"
-    output_path = os.path.join(BENCHMARK_PATH, 'results', version)
-
-    # metrics
-    del METRICS['accuracy']
-    METRICS['confusion_matrix'] = contextual_confusion_matrix
-    metrics = {k: partial(fun, weighted=False) for k, fun in METRICS.items()}
-
-    # pipelines
-    pipelines = ['lstm_dynamic_threshold']
-
-    # datasets
-    datasets = {
-        'MSL': BENCHMARK_DATA['MSL'],
-        'SMAP': BENCHMARK_DATA['SMAP']
-    }
-
-    results = benchmark(datasets=datasets,
-        pipelines=pipelines, metrics=metrics, output_path=output_path, workers=workers,
-        show_progress=False, pipeline_dir=pipeline_dir, cache_dir=cache_dir)
-
-    return results
-
-
-if __name__ == "__main__":
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-    logging.debug("test")
-
-    results = main()

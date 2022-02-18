@@ -23,6 +23,8 @@ from orion.benchmark import benchmark
 from orion.evaluation import CONTEXTUAL_METRICS as METRICS
 from orion.evaluation import contextual_confusion_matrix
 
+from sintel.benchmark import tune_benchmark
+
 warnings.simplefilter('ignore')
 
 LOGGER = logging.getLogger(__name__)
@@ -295,12 +297,49 @@ def run_benchmark():
     METRICS['confusion_matrix'] = contextual_confusion_matrix
     metrics = {k: partial(fun, weighted=False) for k, fun in METRICS.items()}
 
-    print("Benchmarking ..")
     results = benchmark(
         pipelines=PIPELINES, datasets=DATASETS, metrics=metrics, output_path=result_path, 
         workers=workers, show_progress=True, pipeline_dir=pipeline_dir, cache_dir=cache_dir)
 
     return results
 
+def run_tune_benchmark():
+    workers = 1 # int or "dask"
+
+    # path of results
+    result_path = os.path.join(OUTPUT_PATH, 'tune_benchmark.csv')
+
+    # path to save pipelines
+    pipeline_dir = os.path.join(OUTPUT_PATH, 'tune_save_pipelines')
+
+    # path to save output on the fly
+    cache_dir = os.path.join(OUTPUT_PATH, 'tune_cache')
+
+    # metrics
+    del METRICS['accuracy']
+    METRICS['confusion_matrix'] = contextual_confusion_matrix
+    metrics = {k: partial(fun, weighted=False) for k, fun in METRICS.items()}
+
+    # pipelines
+    pipelines = ['lstm_dynamic_threshold', 'tadgan', 'lstm_autoencoder', 'dense_autoencoder']
+
+    # datasets
+    datasets = {
+        "artificialWithAnomaly": BENCHMARK_DATA["artificialWithAnomaly"],
+        "realAWSCloudwatch": BENCHMARK_DATA["realAWSCloudwatch"],
+        "realAdExchange": BENCHMARK_DATA["realAdExchange"],
+        "realTraffic": BENCHMARK_DATA["realTraffic"],
+        "realTweets": BENCHMARK_DATA["realTweets"]
+    }
+
+    results = tune_benchmark(datasets=datasets,
+        pipelines=pipelines, metrics=metrics, output_path=result_path, workers=workers,
+        show_progress=True, pipeline_dir=pipeline_dir, cache_dir=cache_dir)
+
+    return results
+
 if __name__ == '__main__':
-    run_benchmark()
+    # print("Running benchmark.. ")
+    # run_benchmark()
+    print("Running tuning benchmark.. ")
+    run_tune_benchmark()
