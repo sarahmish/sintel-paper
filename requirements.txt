@@ -10,7 +10,6 @@ azure-cognitiveservices-anomalydetector==0.3.0
 azure-common==1.1.27
 Babel==2.9.1
 backcall==0.2.0
-backports.entry-points-selectable==1.1.0
 baytune==0.3.12
 beautifulsoup4==4.10.0
 bleach==4.1.0
@@ -28,7 +27,6 @@ coverage==5.5
 cryptography==35.0.0
 cycler==0.10.0
 dask==2021.3.0
-dataclasses==0.8
 decorator==4.4.2
 defusedxml==0.7.1
 distlib==0.3.3
@@ -144,7 +142,8 @@ s3fs==0.4.2
 scikit-image==0.14.5
 scikit-learn==0.20.4
 scipy==1.5.4
-SecretStorage==3.3.1
+seaborn==0.11.1
+Send2Trash==1.7.1
 six==1.16.0
 smart-open==5.2.1
 snowballstemmer==2.1.0
@@ -167,8 +166,6 @@ traitlets==4.3.3
 twine==3.4.2
 typing-extensions==3.10.0.2
 urllib3==1.26.7
-virtualenv==20.8.1
-watchdog==0.10.4
 wcwidth==0.2.5
 webencodings==0.5.1
 Werkzeug==2.0.2
