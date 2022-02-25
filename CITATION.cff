@@ -1,9 +1,9 @@
 cff-version: 0.1.0
+title: "Sintel: A Machine Learning Framework to Extract Insights from Signals"
 message: "Reproducibility repo of "Sintel: A Machine Learning Framework to Extract Insights from Signals"".
 authors:
-  - family-names: Alnegheimish
-    given-names: Sarah
-    orcid: https://orcid.org/0000-0003-4516-5856
-title: "Sintel: A Machine Learning Framework to Extract Insights from Signals"
-version: 0.1.7
-date-released: 2022-02-17
+  - family-names: "Alnegheimish"
+    given-names: "Sarah"
+    orcid: "https://orcid.org/0000-0003-4516-5856"
+version: 0.1.0
+date-released: 2022-02-24
