@@ -65,7 +65,7 @@ def _savefig(fig, name, figdir=OUTPUT_PATH):
     figdir = Path(figdir)
     for ext in ['.png', '.pdf', '.eps']:
         fig.savefig(figdir.joinpath(name+ext),
-                    bbox_inches='tight', pad_inches=0)
+                    bbox_inches='tight')
 
 # ------------------------------------------------------------------------------
 # Plotting results
