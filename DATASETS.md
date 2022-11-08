@@ -1,6 +1,6 @@
 # Datasets
 
-For the anomaly detection task in Sinte, the system takes a time series signal and produces an interval of expected anomalies. The input to the framework is a univariate time series (can also be multivariate) and the output is a table denoting the start and end timestamp of the anomalies.
+For the anomaly detection task in Sintel, the system takes a time series signal and produces an interval of expected anomalies. The input to the framework is a univariate time series (can also be multivariate) and the output is a table denoting the start and end timestamp of the anomalies.
 
 ## Data Format
 
